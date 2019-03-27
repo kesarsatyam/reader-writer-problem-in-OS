@@ -1,0 +1,54 @@
+ #include<iostream>
+#include<pthread.h>
+#include<unistd.h>
+#include<stdio.h>
+#include<sys/types.h>
+#include<string.h>
+#include<semaphore.h>
+using namespace std;
+void *writer(void *arg);
+void *reader(void *arg);
+int increment=0;
+sem_t sat;//sat variable for mutual exclusion(no two process can enter the critical section)
+sem_t shared_var;// shared variable
+
+int main()
+{
+pthread_t x_thread,y_thread;
+sem_init(&sat,0,1);
+sem_init(&sat,0,1);
+
+pthread_create(&x_thread,NULL,writer,NULL);
+pthread_join(x_thread,NULL);
+//cout<<"Thread2 has been joind\n";
+pthread_create(&y_thread,NULL,reader,NULL);
+pthread_join(y_thread,NULL);
+//cout<<"Thread2 has been joind\n";
+}
+void *writer(void *arg)
+{
+	
+	// writer want to enter the critical section
+	sem_wait(&shared_var);
+	cout<<"writer can write\n";
+	sem_post(&shared_var);
+
+}
+void *reader(void *arg)
+{
+	//reader want to enter the critical section 
+
+
+    sem_wait(&sat);
+    increment++;
+    if(increment==1)
+    sem_wait(&shared_var);
+    sem_post(&sat);
+    cout<<"Readers can read\n";
+
+	sem_wait(&sat);
+	increment--;
+	if(increment==0)
+	sem_post(&shared_var);
+	sem_post(&sat);
+}
