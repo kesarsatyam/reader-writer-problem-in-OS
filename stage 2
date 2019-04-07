@@ -1,0 +1,76 @@
+#include<unistd.h>
+#include<stdio.h>
+#include<semaphore.h>
+#include<pthread.h>
+#include<conio.h>
+void *reader(void *arg);
+void *writer(void *arg);
+sem_t mutex;
+sem_t wrt;
+int increment=0,count=0,sat=0;
+int main()
+{
+	int i,j,k,l,z,m,n;
+
+	pthread_t a,b,c,d;
+	sem_init(&mutex,0,1);
+	sem_init(&wrt,0,1);
+	
+	while(1){
+	
+	printf("Choose your choice: \n 1. Reader \n 2. Writer \n 3. Exit \n");
+	scanf("%d",&z);
+	switch(z){
+case 1:
+    i==1;
+	pthread_create(&b,NULL,reader,(void *)i);
+    pthread_join(b,NULL);
+    break;
+case 2:
+    j==1;
+	pthread_create(&a,NULL,writer,(void *)j);
+	pthread_join(a,NULL);
+    break;
+
+case 3:	printf("thanks!!");getch();return 0;
+    	
+default: printf("choose correct one"); 
+continue;
+}
+}
+}
+void *writer(void *arg)
+{
+	int *f=(int *)arg;
+   if (increment==0 && sat==0)
+	{
+	sem_wait(&wrt);
+		printf("writer process added\n");
+			count++;
+			sat++;
+	sem_post(&wrt);
+	}
+	else if(sat>0)
+	{
+		printf("writer process already going on...");
+	}
+		else
+	{
+		printf("file already in read mode\n");
+	}
+}
+void *reader(void *arg)
+{
+	int *f=(int *)arg;
+    if(count >0 && increment==0)
+    {	
+    	printf("user in write mode\n read process added in que\n");
+    	wrt++; 	  	
+	}
+    else
+    {
+	increment++;
+	mutex--;
+	printf("reader process added and reader no is %d \n",increment);
+    }
+}
