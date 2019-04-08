@@ -1,0 +1,166 @@
+#include<unistd.h> // including the headers files
+#include<stdio.h>
+#include<semaphore.h>
+#include<pthread.h>
+#include<conio.h>
+void *reader(void *arg); //function for the READER PROCESS
+void *writer(void *arg); // function for the WRITER PROCESS
+void *rmreader(void *arg); // function for the REMOVE READER PROCESS 
+void *rmwriter(void *arg); // function for the REMOVE WRITER PROCESS
+sem_t mutex; //for synchronization between SHARED VARIABLE (different readers)
+sem_t wrt; // semaphore variable for writer process to enter critical section
+int increment=0; // Shared variable, for how many numbers of reader are there in critical section
+// and this could not be clash b/w different readers in critical section of reader process
+int count=0; //TO CHECK IF ANY WRITER IN CRITICSL SECTION THEN INCRESE THE VALUE AND IF ANY READER COMES THEN PUT INTO THE QUEUE
+int multi_writer=0; //MORE THAN ONE WRITER performing at a same time
+int que=0; // VARIABLE FOR COUNTING THE  REMAINING  READERS IN QUEUE
+int status; //STATUS OF THE WTITER (performing or not)
+int main()
+{
+	int i,j,k,l,z,m,n; // INITIALIZE INTEGERS
+	pthread_t a,b,c,d; // DEFINING VARIABLE OF THREADS
+	sem_init(&mutex,0,1); //INITIALIZE SEMAPHORE variables 
+	sem_init(&wrt,0,1);
+	
+	while(1){
+	printf("Choose your option to perform programme: \n 1. Reader \n 2. Writer \n 3. Remove Reader \n 4. Remove Writer \n 5. Exit \n"); //SHOWING THE OPTIONS TO PERFORM
+	scanf("%d",&z);
+	if(z<=0)
+	{
+		printf("You can't take negative value\n\n"); //USER CAN'T SELECT NEGATIVE VALUE
+	}
+	else
+	{
+	switch(z){
+case 1:
+	pthread_create(&b,NULL,reader,NULL);
+	//pthread_create create thread for READER PROCESS 
+              // 1 parameter--is the location where the ID of the newly created thread should be stored
+	// 2 parameter--is the thread attribute of the process is being created
+	// 3 parameter--is the main function of thread, call the function for the thread process
+	// 4 parameter--attribute to be passed in function, here i am passing NULL means i am not pasing any argmunt to the function 
+    pthread_join(b,NULL);
+    // pthread_join, this function will block until the main process thread terminates.
+    //1 parameter--is the thread id that the process is waiting for
+    //2 parameter-- and the second is a pointer to the argument passed back by the thread  here it is NULL because i have not retun anything
+    break;
+case 2: 
+	pthread_create(&a,NULL,writer,NULL); //same as case first
+	pthread_join(a,NULL);
+    break;
+case 3:
+	pthread_create(&c,NULL,rmreader,NULL); //same as case first
+    pthread_join(c,NULL);
+	break;
+case 4:
+	pthread_create(&d,NULL,rmwriter,NULL); //same as case first
+    pthread_join(d,NULL);
+	break;
+case 5:	printf("Thanks!!");return(0);
+    	
+default: printf("Choose correct one\n\n"); 
+continue;
+}
+}
+}
+}
+void *writer(void *arg)
+{
+//writer process wants to enter the programmme
+   if (increment==0 && multi_writer==0) //increment==0 means first user and multi_writer==0 means one writer at a time
+	{
+		if(que>0) //means reader already in QUEUE so writer can not perform write operation while reader are in read mode
+		{
+			printf("No WRITER can PERFORM WRITE PROCESS  because READER PROCESS in read mode\n\n");
+		}
+		else
+		{
+		
+	sem_wait(&wrt); //here writer wants to enter the critical section initially semaphore variable wrt valuse is "1" so wait the wrt and decrement it to "0" 
+	//So writer process can perform write operation
+		printf("--------------------------WRITER PROCESS added-----------------and Number of Reader is %d \n\n--------",increment); //Reader must be "0" while writer performing the operation
+					status=1; //to set the value 1 to ensure that write mode is going on..
+			count++; // count the the writer operation
+			multi_writer++; //to check the multiple writer at same time
+	sem_post(&wrt); //semaphore post increase the wrt value "0" to "1" so another writer can perform after first writer leave the operation
+}
+	}
+	else if(multi_writer>0) //telling the user, if another writer wants to write while already writer process is going on  
+	{
+		printf("=*=*=*=*=*=*=WRIETR PROCESS already going on...=*=*=*=*=*=*=\n\n"); //no two writer perform write operation at same time
+	}
+	else //any reader in read mode
+	{
+		printf("--------------------------READER PROCESS already in read mode, So WRITER COULD NOT BE perform write operation\n\n"); // While any reader perform read operation no writer can enter the critical section
+	}
+
+}
+void *reader(void *arg)
+{
+//Reader process wants to read
+    if(count >0 && increment==0) //count>0 means writer are performing the writer process 
+    {	que++; // as the priority is concerned of reader process if any writer is performing the writer operation and at same time any reader come then put into the queue
+    	printf("WRITER PROCESS is on write mode\n-------------------------------So,READER PROCESS added in queue %d-----------------------\n\n",que); //reader put into the queue
+    	printf("Total reader in QUEUE is %d:\n\n",que); // and show the no of  reader value in the queue
+	}
+	else if(que>0) //Reader process already in queue
+	{
+		que++; //increment the reader process in queue
+		printf("Total NUMBER of READER are in QUEUE is %d\n\n",que); //show the total no. of readers in queue		
+	}
+else  
+{
+	increment++; //increment reader value
+	printf("--------------------------READER PROCESS added and READER no is %d   --------------------------\n\n",increment); //Reader process added and the no of reader value
+}
+}
+void *rmreader(void *arg)
+{
+// Remove Reader Process
+	if(increment==0 && que==0) // if Queue is "0" means no reader in queue
+	{
+		printf("*****************No READER PROCESS to remove******************\n\n"); // so no reader to remove
+	}
+	else
+	{
+		increment--; // remove one reader 
+		if(increment==0) // none of reader in process
+		{
+			printf("----------------------no READER performing READ PROCESS---------------------------------\n\n");
+		}
+
+		else{
+		if(que>0) //If reader already in queue
+		{
+			que--; // decrement(remove) the reader from the queue
+			if(que==0) //no reader in queue
+			{
+				printf("NO READER is in READING PROCESS\n\n");
+				increment++;
+			}
+			else
+			{
+	        increment++;
+			printf("Total NUMBER of READER are in QUEUE is %d\n\n",que); //Remaining no of readers in the queue after remove of reader
+			}
+		}
+		else 
+		{
+		printf("-------------------------READER PROCESS removed and remaining READER is %d    --------------------------\n\n",increment); //remove the reader process with remaning reader value 
+	}
+	}
+	}
+}
+void *rmwriter(void *arg)
+{
+// Remove writer process
+	if(status==0) // status is "0" means no writer performing the writer operation so no writer can removed
+	printf("*********************No WRITER PROCESS to remove* *****************\n\n");
+	else
+	{	
+		printf("=================WRITER PROCESS removed========================\n\n");
+		status==0; // after remove the writer process set the writer process status is 0 means no writer is performing
+		multi_writer--; //decrement and set it to 0, so there is no another writer is going on..
+		count--;
+	}
+}
